@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Phishing URL & File Detector</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .result { margin-top: 20px; font-weight: bold; }
+        input[type="text"], input[type="file"] { margin-bottom: 10px; }
+        button { margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Phishing URL & File Threat Detector</h1>
+    <form id="urlForm">
+        <label for="urlInput">Enter URL to check:</label><br>
+        <input type="text" id="urlInput" name="urlInput" size="50" required>
+        <button type="submit">Check URL</button>
+    </form>
+    <div id="urlResult" class="result"></div>
+
+    <hr>
+
+    <form id="fileForm">
+        <label for="fileInput">Upload file to check:</label><br>
+        <input type="file" id="fileInput" name="fileInput" required>
+        <button type="submit">Check File</button>
+    </form>
+    <div id="fileResult" class="result"></div>
+
+    <script>
+        // Simple URL phishing detection (heuristics)
+        function isPhishingUrl(url) {
+            // Check for suspicious patterns
+            const suspiciousPatterns = [
+                /@/, // user info in URL
+                /login|verify|update|secure/i, // common phishing keywords
+                /(https?:\/\/)?([a-z0-9\-]+\.){2,}[a-z]{2,}/i, // multiple subdomains
+                /(\.zip|\.exe|\.scr|\.js)$/i // suspicious file extensions
+            ];
+            let score = 0;
+            suspiciousPatterns.forEach(pattern => {
+                if (pattern.test(url)) score++;
+            });
+            // Check for IP address in URL
+            if (/https?:\/\/\d+\.\d+\.\d+\.\d+/.test(url)) score++;
+            // Check for HTTPS
+            if (!/^https:\/\//.test(url)) score++;
+            return score >= 2;
+        }
+
+        document.getElementById('urlForm').onsubmit = function(e) {
+            e.preventDefault();
+            const url = document.getElementById('urlInput').value.trim();
+            if (!url) return;
+            const result = isPhishingUrl(url)
+                ? "Warning: This URL may be a phishing threat!"
+                : "This URL appears safe (basic check).";
+            document.getElementById('urlResult').textContent = result;
+        };
+
+        // Simple file phishing detection (checks for suspicious extensions)
+        function isPhishingFile(fileName) {
+            const suspiciousExtensions = ['.exe', '.scr', '.js', '.bat', '.cmd', '.vbs', '.zip', '.rar'];
+            return suspiciousExtensions.some(ext => fileName.toLowerCase().endsWith(ext));
+        }
+
+        document.getElementById('fileForm').onsubmit = function(e) {
+            e.preventDefault();
+            const fileInput = document.getElementById('fileInput');
+            if (!fileInput.files.length) return;
+            const fileName = fileInput.files[0].name;
+            const result = isPhishingFile(fileName)
+                ? "Warning: This file may be a phishing threat!"
+                : "This file appears safe (basic check).";
+            document.getElementById('fileResult').textContent = result;
+        };
+    </script>
+</body>
+</html>
